@@ -21,12 +21,13 @@ extern crate ethcore_network_devp2p;
 extern crate ethereum_types;
 extern crate ethkey;
 extern crate parity_bytes;
+extern crate parity_crypto as crypto;
 extern crate parking_lot;
 
+use crypto::publickey::{Generator, Random};
 use ethcore_network::*;
 use ethcore_network_devp2p::NetworkService;
 use ethereum_types::U64;
-use ethkey::{Generator, Random};
 use io::TimerToken;
 use parity_bytes::Bytes;
 use parking_lot::Mutex;
@@ -136,7 +137,7 @@ fn net_start_stop() {
 
 #[test]
 fn net_disconnect() {
-    let key1 = Random.generate().unwrap();
+    let key1 = Random.generate();
     let mut config1 = NetworkConfiguration::new_local();
     config1.use_secret = Some(key1.secret().clone());
     config1.boot_nodes = vec![];
