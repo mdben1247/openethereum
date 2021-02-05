@@ -717,7 +717,7 @@ fn verify_external(
         };
 
         let header_seal_hash = header_seal_hash(header, empty_steps_rlp);
-        publickey::verify_address(&correct_proposer, &proposer_signature, &header_seal_hash)?
+        !publickey::verify_address(&correct_proposer, &proposer_signature, &header_seal_hash)?
     };
 
     if is_invalid_proposer {
