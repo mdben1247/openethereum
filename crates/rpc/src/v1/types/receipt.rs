@@ -140,10 +140,10 @@ impl From<TypedReceipt> for Receipt {
 
 #[cfg(test)]
 mod tests {
+    use ethereum_types::{Bloom, H256};
     use serde_json;
     use types::transaction::TypedTxId;
     use v1::types::{Log, Receipt};
-    use ethereum_types::{Bloom, H256};
 
     #[test]
     fn receipt_serialization() {
