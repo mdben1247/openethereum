@@ -25,7 +25,7 @@ use std::{
 use super::error_negatively_reference_hash;
 use ethcore_db::{DBTransaction, DBValue, KeyValueDB};
 use ethereum_types::H256;
-use hash_db::{EMPTY_PREFIX, HashDB, Prefix};
+use hash_db::{HashDB, Prefix, EMPTY_PREFIX};
 use keccak_hasher::KeccakHasher;
 use memory_db::*;
 use rlp::{decode, encode, Decodable, DecoderError, Encodable, Rlp, RlpStream};
@@ -143,7 +143,9 @@ impl OverlayDB {
 
     /// Get the number of references that would be committed.
     pub fn commit_refs(&self, key: &H256) -> i32 {
-        self.overlay.raw(key, EMPTY_PREFIX).map_or(0, |(_, refs)| refs)
+        self.overlay
+            .raw(key, EMPTY_PREFIX)
+            .map_or(0, |(_, refs)| refs)
     }
 
     /// Get the refs and value of the given key.
@@ -245,7 +247,7 @@ impl HashDB<KeccakHasher, DBValue> for OverlayDB {
     }
 
     fn insert(&mut self, prefix: Prefix, value: &[u8]) -> H256 {
-        self.overlay.insert(prefix ,value)
+        self.overlay.insert(prefix, value)
     }
     fn emplace(&mut self, key: H256, prefix: Prefix, value: DBValue) {
         self.overlay.emplace(key, prefix, value);
