@@ -18,7 +18,6 @@
 
 use crypto::publickey::{self, public_to_address, recover, Public, Secret, Signature};
 use ethereum_types::{Address, BigEndianHash, H160, H256, U256};
-use ethjson;
 use hash::keccak;
 use parity_util_mem::MallocSizeOf;
 use rlp::{self, DecoderError, Rlp, RlpStream};
@@ -588,56 +587,6 @@ impl SignatureComponents {
         ));
         s.append(&self.r);
         s.append(&self.s);
-    }
-}
-
-#[cfg(any(test, feature = "test-helpers"))]
-impl From<ethjson::state::Transaction> for SignedTransaction {
-    fn from(t: ethjson::state::Transaction) -> Self {
-        let to: Option<ethjson::hash::Address> = t.to.into();
-        let secret = t.secret.map(|s| Secret::from(s.0));
-        let tx = TypedTransaction::Legacy(Transaction {
-            nonce: t.nonce.into(),
-            gas_price: t.gas_price.into(),
-            gas: t.gas_limit.into(),
-            action: match to {
-                Some(to) => Action::Call(to.into()),
-                None => Action::Create,
-            },
-            value: t.value.into(),
-            data: t.data.into(),
-        });
-        match secret {
-            Some(s) => tx.sign(&s, None),
-            None => tx.null_sign(1),
-        }
-    }
-}
-
-impl From<ethjson::transaction::Transaction> for UnverifiedTransaction {
-    fn from(t: ethjson::transaction::Transaction) -> Self {
-        let to: Option<ethjson::hash::Address> = t.to.into();
-        UnverifiedTransaction {
-            unsigned: TypedTransaction::Legacy(Transaction {
-                nonce: t.nonce.into(),
-                gas_price: t.gas_price.into(),
-                gas: t.gas_limit.into(),
-                action: match to {
-                    Some(to) => Action::Call(to.into()),
-                    None => Action::Create,
-                },
-                value: t.value.into(),
-                data: t.data.into(),
-            }),
-            chain_id: signature::extract_chain_id_from_legacy_v(t.v.into()),
-            signature: SignatureComponents {
-                r: t.r.into(),
-                s: t.s.into(),
-                standard_v: signature::extract_standard_v(t.v.into()),
-            },
-            hash: H256::zero(),
-        }
-        .compute_hash()
     }
 }
 
