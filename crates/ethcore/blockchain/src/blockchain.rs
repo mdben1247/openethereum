@@ -1978,7 +1978,9 @@ mod tests {
             trace_blooms: blooms_db::Database::open(trace_blooms_dir.path()).unwrap(),
             _blooms_dir: blooms_dir,
             _trace_blooms_dir: trace_blooms_dir,
-            key_value: Arc::new(kvdb_memorydb::create(ethcore_db::NUM_COLUMNS)),
+            key_value: Arc::new(ethcore_db::InMemoryWithMetrics::create(
+                ethcore_db::NUM_COLUMNS,
+            )),
         };
 
         Arc::new(db)

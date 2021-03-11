@@ -29,7 +29,6 @@ use ethcore_db::{DBTransaction, DBValue, KeyValueDB};
 use ethereum_types::H256;
 use hash_db::{HashDB, Prefix};
 use keccak_hasher::KeccakHasher;
-use kvdb::{DBTransaction, DBValue, KeyValueDB};
 use parity_util_mem::MallocSizeOfExt;
 use rlp::{decode, encode};
 use traits::JournalDB;
@@ -232,7 +231,7 @@ mod tests {
     #[test]
     fn insert_same_in_fork() {
         // history is 1
-        let mut jdb = ArchiveDB::new(Arc::new(kvdb_memorydb::create(1)), 0);
+        let mut jdb = ArchiveDB::new(Arc::new(ethcore_db::InMemoryWithMetrics::create(1)), 0);
 
         let x = jdb.insert(EMPTY_PREFIX, b"X");
         jdb.commit_batch(1, &keccak(b"1"), None).unwrap();
@@ -260,7 +259,7 @@ mod tests {
     #[test]
     fn long_history() {
         // history is 3
-        let mut jdb = ArchiveDB::new(Arc::new(kvdb_memorydb::create(1)), 0);
+        let mut jdb = ArchiveDB::new(Arc::new(ethcore_db::InMemoryWithMetrics::create(1)), 0);
         let h = jdb.insert(EMPTY_PREFIX, b"foo");
         jdb.commit_batch(0, &keccak(b"0"), None).unwrap();
         assert!(jdb.contains(&h, EMPTY_PREFIX));
@@ -280,7 +279,7 @@ mod tests {
     #[test]
     #[should_panic]
     fn multiple_owed_removal_not_allowed() {
-        let mut jdb = ArchiveDB::new(Arc::new(kvdb_memorydb::create(1)), 0);
+        let mut jdb = ArchiveDB::new(Arc::new(ethcore_db::InMemoryWithMetrics::create(1)), 0);
         let h = jdb.insert(EMPTY_PREFIX, b"foo");
         jdb.commit_batch(0, &keccak(b"0"), None).unwrap();
         assert!(jdb.contains(&h, EMPTY_PREFIX));
@@ -294,7 +293,7 @@ mod tests {
     #[test]
     fn complex() {
         // history is 1
-        let mut jdb = ArchiveDB::new(Arc::new(kvdb_memorydb::create(1)), 0);
+        let mut jdb = ArchiveDB::new(Arc::new(ethcore_db::InMemoryWithMetrics::create(1)), 0);
 
         let foo = jdb.insert(EMPTY_PREFIX, b"foo");
         let bar = jdb.insert(EMPTY_PREFIX, b"bar");
@@ -330,7 +329,7 @@ mod tests {
     #[test]
     fn fork() {
         // history is 1
-        let mut jdb = ArchiveDB::new(Arc::new(kvdb_memorydb::create(1)), 0);
+        let mut jdb = ArchiveDB::new(Arc::new(ethcore_db::InMemoryWithMetrics::create(1)), 0);
 
         let foo = jdb.insert(EMPTY_PREFIX, b"foo");
         let bar = jdb.insert(EMPTY_PREFIX, b"bar");
@@ -359,7 +358,7 @@ mod tests {
     #[test]
     fn overwrite() {
         // history is 1
-        let mut jdb = ArchiveDB::new(Arc::new(kvdb_memorydb::create(1)), 0);
+        let mut jdb = ArchiveDB::new(Arc::new(ethcore_db::InMemoryWithMetrics::create(1)), 0);
 
         let foo = jdb.insert(EMPTY_PREFIX, b"foo");
         jdb.commit_batch(0, &keccak(b"0"), None).unwrap();
@@ -381,7 +380,7 @@ mod tests {
     #[test]
     fn fork_same_key() {
         // history is 1
-        let mut jdb = ArchiveDB::new(Arc::new(kvdb_memorydb::create(1)), 0);
+        let mut jdb = ArchiveDB::new(Arc::new(ethcore_db::InMemoryWithMetrics::create(1)), 0);
         jdb.commit_batch(0, &keccak(b"0"), None).unwrap();
 
         let foo = jdb.insert(EMPTY_PREFIX, b"foo");
@@ -400,7 +399,7 @@ mod tests {
 
     #[test]
     fn reopen() {
-        let shared_db = Arc::new(kvdb_memorydb::create(1));
+        let shared_db = Arc::new(ethcore_db::InMemoryWithMetrics::create(1));
         let bar = H256::random();
 
         let foo = {
@@ -430,7 +429,7 @@ mod tests {
 
     #[test]
     fn reopen_remove() {
-        let shared_db = Arc::new(kvdb_memorydb::create(1));
+        let shared_db = Arc::new(ethcore_db::InMemoryWithMetrics::create(1));
 
         let foo = {
             let mut jdb = ArchiveDB::new(shared_db.clone(), 0);
@@ -464,7 +463,7 @@ mod tests {
 
     #[test]
     fn reopen_fork() {
-        let shared_db = Arc::new(kvdb_memorydb::create(1));
+        let shared_db = Arc::new(ethcore_db::InMemoryWithMetrics::create(1));
         let (foo, _, _) = {
             let mut jdb = ArchiveDB::new(shared_db.clone(), 0);
             // history is 1
@@ -492,7 +491,7 @@ mod tests {
 
     #[test]
     fn inject() {
-        let mut jdb = ArchiveDB::new(Arc::new(kvdb_memorydb::create(1)), 0);
+        let mut jdb = ArchiveDB::new(Arc::new(ethcore_db::InMemoryWithMetrics::create(1)), 0);
         let key = jdb.insert(EMPTY_PREFIX, b"dog");
         jdb.inject_batch().unwrap();
 

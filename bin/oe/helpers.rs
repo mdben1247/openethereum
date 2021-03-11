@@ -261,7 +261,7 @@ pub fn to_client_config(
     pruning_memory: usize,
     check_seal: bool,
     max_round_blocks_to_import: usize,
-    db_max_wal_size: Option<u32>
+    db_max_wal_size: Option<u32>,
 ) -> ClientConfig {
     let mut client_config = ClientConfig::default();
 

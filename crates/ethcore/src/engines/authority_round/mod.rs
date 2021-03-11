@@ -44,7 +44,7 @@ use engines::{
 };
 use error::{BlockError, Error, ErrorKind};
 use ethereum_types::{Address, H256, H520, U128, U256};
-use ethjson;
+use ethjson::{self, uint::Uint};
 use hash::keccak;
 use io::{IoContext, IoHandler, IoService, TimerToken};
 use itertools::{self, Itertools};

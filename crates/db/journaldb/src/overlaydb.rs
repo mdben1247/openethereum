@@ -88,7 +88,7 @@ impl OverlayDB {
     /// Create a new instance of OverlayDB with an anonymous temporary database.
     #[cfg(test)]
     pub fn new_temp() -> OverlayDB {
-        let backing = Arc::new(::kvdb_memorydb::create(1));
+        let backing = Arc::new(::ethcore_db::InMemoryWithMetrics::create(1));
         Self::new(backing, 0)
     }
 

@@ -27,7 +27,6 @@ use ethcore_db::{DBTransaction, DBValue, KeyValueDB};
 use ethereum_types::H256;
 use hash_db::{HashDB, Prefix, EMPTY_PREFIX};
 use keccak_hasher::KeccakHasher;
-use kvdb::{DBTransaction, DBValue, KeyValueDB};
 use memory_db::{HashKey, MemoryDB};
 use overlaydb::OverlayDB;
 use parity_util_mem::{allocators::new_malloc_size_ops, MallocSizeOf};
@@ -257,7 +256,7 @@ mod tests {
     use JournalDB;
 
     fn new_db() -> RefCountedDB {
-        let backing = Arc::new(kvdb_memorydb::create(1));
+        let backing = Arc::new(ethcore_db::InMemoryWithMetrics::create(1));
         RefCountedDB::new(backing, 0)
     }
 

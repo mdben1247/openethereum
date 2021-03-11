@@ -973,7 +973,7 @@ impl Spec {
 
         let factories = Default::default();
         let mut db = journaldb::new(
-            Arc::new(kvdb_memorydb::create(1)),
+            Arc::new(ethcore_db::InMemoryWithMetrics::create(1)),
             journaldb::Algorithm::Archive,
             0,
         );

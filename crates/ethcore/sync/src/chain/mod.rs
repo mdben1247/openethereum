@@ -108,7 +108,7 @@ use ethereum_types::{H256, U256};
 use fastmap::{H256FastMap, H256FastSet};
 use hash::keccak;
 use network::{self, client_version::ClientVersion, PeerId};
-use parking_lot::{Mutex, RwLock, RwLockWriteGuard};
+use parking_lot::Mutex;
 use rand::{seq::SliceRandom, Rng};
 use rlp::{DecoderError, RlpStream};
 use snapshot::Snapshot;

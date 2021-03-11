@@ -562,7 +562,7 @@ mod tests {
     use JournalDB;
 
     fn new_db() -> OverlayRecentDB {
-        let backing = Arc::new(kvdb_memorydb::create(1));
+        let backing = Arc::new(ethcore_db::InMemoryWithMetrics::create(1));
         OverlayRecentDB::new(backing, 0)
     }
 
@@ -836,7 +836,7 @@ mod tests {
 
     #[test]
     fn reopen() {
-        let shared_db = Arc::new(kvdb_memorydb::create(1));
+        let shared_db = Arc::new(ethcore_db::InMemoryWithMetrics::create(1));
         let bar = H256::random();
 
         let foo = {
@@ -1019,7 +1019,7 @@ mod tests {
     fn reopen_remove_three() {
         let _ = ::env_logger::try_init();
 
-        let shared_db = Arc::new(kvdb_memorydb::create(1));
+        let shared_db = Arc::new(ethcore_db::InMemoryWithMetrics::create(1));
         let foo = keccak(b"foo");
 
         {
@@ -1080,7 +1080,7 @@ mod tests {
 
     #[test]
     fn reopen_fork() {
-        let shared_db = Arc::new(kvdb_memorydb::create(1));
+        let shared_db = Arc::new(ethcore_db::InMemoryWithMetrics::create(1));
 
         let (foo, bar, baz) = {
             let mut jdb = OverlayRecentDB::new(shared_db.clone(), 0);
@@ -1150,7 +1150,7 @@ mod tests {
 
     #[test]
     fn earliest_era() {
-        let shared_db = Arc::new(kvdb_memorydb::create(1));
+        let shared_db = Arc::new(ethcore_db::InMemoryWithMetrics::create(1));
 
         // empty DB
         let mut jdb = OverlayRecentDB::new(shared_db.clone(), 0);

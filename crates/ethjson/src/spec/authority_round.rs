@@ -139,9 +139,9 @@ mod tests {
         assert_eq!(deserialized.params.step_duration, Uint(U256::from(0x02)));
         assert_eq!(
             deserialized.params.validators,
-            ValidatorSet::Contract(Address(H160::from(
-                "0xc6d9d2cd449a754c494264e1809c50e34d64562b"
-            )))
+            ValidatorSet::Contract(Address(
+                H160::from_str("c6d9d2cd449a754c494264e1809c50e34d64562b").unwrap()
+            ))
         );
         let mut rewards: BTreeMap<Uint, Uint> = BTreeMap::new();
         rewards.insert(Uint(U256::from(0)), Uint(U256::from(5000000)));

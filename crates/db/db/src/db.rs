@@ -18,8 +18,10 @@
 
 use kvdb::DBTransaction;
 use kvdb_rocksdb::Database;
+use parity_util_mem::MallocSizeOf;
 use parking_lot::RwLock;
-use std::{collections::HashMap, hash::Hash};
+use stats::{PrometheusMetrics, PrometheusRegistry};
+use std::{collections::HashMap, hash::Hash, io::Read};
 
 use rlp;
 
@@ -314,11 +316,16 @@ impl<KVDB: KeyValueDB + ?Sized> Readable for KVDB {
 }
 
 /// Database with enabled statistics
+#[derive(MallocSizeOf)]
 pub struct DatabaseWithMetrics {
     db: Database,
+    #[ignore_malloc_size_of = "ignored"]
     reads: std::sync::atomic::AtomicI64,
+    #[ignore_malloc_size_of = "ignored"]
     writes: std::sync::atomic::AtomicI64,
+    #[ignore_malloc_size_of = "ignored"]
     bytes_read: std::sync::atomic::AtomicI64,
+    #[ignore_malloc_size_of = "ignored"]
     bytes_written: std::sync::atomic::AtomicI64,
 }
 
@@ -339,7 +346,7 @@ impl DatabaseWithMetrics {
 pub trait KeyValueDB: kvdb::KeyValueDB + PrometheusMetrics {}
 
 impl kvdb::KeyValueDB for DatabaseWithMetrics {
-    fn get(&self, col: Option<u32>, key: &[u8]) -> std::io::Result<Option<kvdb::DBValue>> {
+    fn get(&self, col: u32, key: &[u8]) -> std::io::Result<Option<kvdb::DBValue>> {
         let res = self.db.get(col, key);
         let count = res
             .as_ref()
@@ -352,7 +359,7 @@ impl kvdb::KeyValueDB for DatabaseWithMetrics {
 
         res
     }
-    fn get_by_prefix(&self, col: Option<u32>, prefix: &[u8]) -> Option<Box<[u8]>> {
+    fn get_by_prefix(&self, col: u32, prefix: &[u8]) -> Option<Box<[u8]>> {
         let res = self.db.get_by_prefix(col, prefix);
         let count = res.as_ref().map_or(0, |x| x.bytes().count());
 
@@ -362,24 +369,6 @@ impl kvdb::KeyValueDB for DatabaseWithMetrics {
             .fetch_add(count as i64, std::sync::atomic::Ordering::Relaxed);
 
         res
-    }
-    fn write_buffered(&self, transaction: DBTransaction) {
-        let mut count = 0;
-        for op in &transaction.ops {
-            count += match op {
-                kvdb::DBOp::Insert { value, .. } => value.bytes().count(),
-                _ => 0,
-            };
-        }
-
-        self.writes.fetch_add(
-            transaction.ops.len() as i64,
-            std::sync::atomic::Ordering::Relaxed,
-        );
-        self.bytes_written
-            .fetch_add(count as i64, std::sync::atomic::Ordering::Relaxed);
-
-        self.db.write_buffered(transaction)
     }
     fn write(&self, transaction: DBTransaction) -> std::io::Result<()> {
         let mut count = 0;
@@ -398,23 +387,16 @@ impl kvdb::KeyValueDB for DatabaseWithMetrics {
         );
         self.db.write(transaction)
     }
-    fn flush(&self) -> std::io::Result<()> {
-        self.db.flush()
-    }
-
-    fn iter<'a>(
-        &'a self,
-        col: Option<u32>,
-    ) -> Box<(dyn Iterator<Item = (Box<[u8]>, Box<[u8]>)> + 'a)> {
+    fn iter<'a>(&'a self, col: u32) -> Box<(dyn Iterator<Item = (Box<[u8]>, Box<[u8]>)> + 'a)> {
         kvdb::KeyValueDB::iter(&self.db, col)
     }
 
-    fn iter_from_prefix<'a>(
+    fn iter_with_prefix<'a>(
         &'a self,
-        col: Option<u32>,
+        col: u32,
         prefix: &'a [u8],
     ) -> Box<dyn Iterator<Item = (Box<[u8]>, Box<[u8]>)> + 'a> {
-        self.db.iter_from_prefix(col, prefix)
+        self.db.iter_with_prefix(col, prefix)
     }
 
     fn restore(&self, new_db: &str) -> std::io::Result<()> {
@@ -451,40 +433,31 @@ impl PrometheusMetrics for DatabaseWithMetrics {
 }
 
 /// InMemory with disabled statistics
+#[derive(MallocSizeOf)]
 pub struct InMemoryWithMetrics {
     db: kvdb_memorydb::InMemory,
 }
 
 impl kvdb::KeyValueDB for InMemoryWithMetrics {
-    fn get(&self, col: Option<u32>, key: &[u8]) -> std::io::Result<Option<kvdb::DBValue>> {
+    fn get(&self, col: u32, key: &[u8]) -> std::io::Result<Option<kvdb::DBValue>> {
         self.db.get(col, key)
     }
-    fn get_by_prefix(&self, col: Option<u32>, prefix: &[u8]) -> Option<Box<[u8]>> {
+    fn get_by_prefix(&self, col: u32, prefix: &[u8]) -> Option<Box<[u8]>> {
         self.db.get_by_prefix(col, prefix)
-    }
-    fn write_buffered(&self, transaction: DBTransaction) {
-        self.db.write_buffered(transaction)
     }
     fn write(&self, transaction: DBTransaction) -> std::io::Result<()> {
         self.db.write(transaction)
     }
-    fn flush(&self) -> std::io::Result<()> {
-        self.db.flush()
-    }
-
-    fn iter<'a>(
-        &'a self,
-        col: Option<u32>,
-    ) -> Box<(dyn Iterator<Item = (Box<[u8]>, Box<[u8]>)> + 'a)> {
+    fn iter<'a>(&'a self, col: u32) -> Box<(dyn Iterator<Item = (Box<[u8]>, Box<[u8]>)> + 'a)> {
         kvdb::KeyValueDB::iter(&self.db, col)
     }
 
-    fn iter_from_prefix<'a>(
+    fn iter_with_prefix<'a>(
         &'a self,
-        col: Option<u32>,
+        col: u32,
         prefix: &'a [u8],
     ) -> Box<dyn Iterator<Item = (Box<[u8]>, Box<[u8]>)> + 'a> {
-        self.db.iter_from_prefix(col, prefix)
+        self.db.iter_with_prefix(col, prefix)
     }
 
     fn restore(&self, new_db: &str) -> std::io::Result<()> {

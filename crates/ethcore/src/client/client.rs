@@ -1171,7 +1171,7 @@ impl Client {
                     match chain.block_hash(earliest_era) {
                         Some(ancient_hash) => {
                             let mut batch = DBTransaction::new();
-                            state_db.mark_canonical(&mut batch, era, &ancient_hash)?;
+                            state_db.mark_canonical(&mut batch, earliest_era, &ancient_hash)?;
                             self.db.read().key_value().write(batch)?;
                         }
                         None => {
