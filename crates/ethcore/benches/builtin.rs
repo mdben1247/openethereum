@@ -33,6 +33,7 @@ use ethcore::{ethereum::new_byzantium_test_machine, machine::EthereumMachine};
 use ethcore_builtin::Builtin;
 use ethereum_types::H160;
 use rustc_hex::FromHex;
+use std::str::FromStr;
 
 lazy_static! {
     static ref BYZANTIUM_MACHINE: EthereumMachine = new_byzantium_test_machine();

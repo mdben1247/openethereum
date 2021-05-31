@@ -23,7 +23,6 @@ use crate::{
     sync::{self, validate_node_url, NetworkConfiguration},
 };
 use ansi_term::Colour;
-
 use crypto::publickey::{Public, Secret};
 use ethcore::{
     client::VMType,
@@ -32,7 +31,6 @@ use ethcore::{
     verification::queue::VerifierSettings,
 };
 use ethereum_types::{Address, H256, U256};
-
 use num_cpus;
 use parity_version::{version, version_data};
 use std::{
@@ -432,6 +430,7 @@ impl Configuration {
                 no_persistent_txqueue: self.args.flag_no_persistent_txqueue,
                 max_round_blocks_to_import: self.args.arg_max_round_blocks_to_import,
                 metrics_conf,
+                db_max_wal_size: self.args.arg_db_max_wal_size,
             };
             Cmd::Run(run_cmd)
         };
@@ -1566,6 +1565,7 @@ mod tests {
             no_persistent_txqueue: false,
             max_round_blocks_to_import: 1,
             metrics_conf: MetricsConfiguration::default(),
+            db_max_wal_size: None,
         };
         expected.secretstore_conf.enabled = cfg!(feature = "secretstore");
         expected.secretstore_conf.http_enabled = cfg!(feature = "secretstore");

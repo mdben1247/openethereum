@@ -36,7 +36,9 @@ use call_contract::CallContract;
 use db::{DBTransaction, DBValue, KeyValueDB};
 use ethcore_miner::pool::VerifiedTransaction;
 use ethereum_types::{Address, H256, H264, U256};
+use ethtrie::Layout;
 use hash::keccak;
+use hash_db::EMPTY_PREFIX;
 use itertools::Itertools;
 use parking_lot::{Mutex, RwLock};
 use rand::rngs::OsRng;
@@ -410,9 +412,6 @@ impl Importer {
                 });
             }
         }
-        trace!(target:"block_import","Flush block to db");
-        let db = client.db.read();
-        db.key_value().flush().expect("DB flush failed.");
 
         self.block_queue.resignal_verification();
         trace!(target:"block_import","Resignal verifier");
@@ -571,10 +570,9 @@ impl Importer {
                 true,
             );
             // Final commit to the DB
-            db.write_buffered(batch);
+            db.write(batch)?;
             chain.commit();
         }
-        db.flush().expect("DB flush failed.");
         Ok(())
     }
 
@@ -716,7 +714,12 @@ impl Importer {
         state.sync_cache(&route.enacted, &route.retracted, is_canon);
         // Final commit to the DB
         // t_nb 9.11 Write Transaction to database (cached)
-        client.db.read().key_value().write_buffered(batch);
+        client
+            .db
+            .read()
+            .key_value()
+            .write(batch)
+            .expect("Low level database error writing a transaction. Some issue with the disk?");
         // t_nb 9.12 commit changed to become current greatest by applying pending insertion updates (Sync point)
         chain.commit();
 
@@ -793,17 +796,13 @@ impl Importer {
                             let res = Executive::new(&mut state, &env_info, &machine, &schedule)
                                 .transact(&transaction, options);
 
-                            let res = match res {
+                            match res {
                                 Err(e) => {
                                     trace!(target: "client", "Proved call failed: {}", e);
                                     Err(e.to_string())
                                 }
                                 Ok(res) => Ok((res.output, state.drop().1.extract_proof())),
-                            };
-
-                            res.map(|(output, proof)| {
-                                (output, proof.into_iter().map(|x| x.into_vec()).collect())
-                            })
+                            }
                         };
 
                         match with_state.generate_proof(&call) {
@@ -887,7 +886,7 @@ impl Client {
             false => TrieSpec::Secure,
         };
 
-        let trie_factory = TrieFactory::new(trie_spec);
+        let trie_factory = TrieFactory::new(trie_spec, Layout);
         let factories = Factories {
             vm: VmFactory::new(config.vm_type.clone(), config.jump_table_size),
             trie: trie_factory,
@@ -929,7 +928,11 @@ impl Client {
 
         if !chain
             .block_header_data(&chain.best_block_hash())
-            .map_or(true, |h| state_db.journal_db().contains(&h.state_root()))
+            .map_or(true, |h| {
+                state_db
+                    .journal_db()
+                    .contains(&h.state_root(), EMPTY_PREFIX)
+            })
         {
             warn!(
                 "State root not found for block #{} ({:x})",
@@ -1060,12 +1063,10 @@ impl Client {
                     },
                 );
 
-                client.db.read().key_value().write_buffered(batch);
+                client.db.read().key_value().write(batch)?;
             }
         }
 
-        // ensure buffered changes are flushed.
-        client.db.read().key_value().flush()?;
         Ok(client)
     }
 
@@ -1232,8 +1233,7 @@ impl Client {
                         Some(ancient_hash) => {
                             let mut batch = DBTransaction::new();
                             state_db.mark_canonical(&mut batch, earliest_era, &ancient_hash)?;
-                            self.db.read().key_value().write_buffered(batch);
-                            state_db.journal_db().flush();
+                            self.db.read().key_value().write(batch)?;
                         }
                         None => {
                             debug!(target: "client", "Missing expected hash for block {}", earliest_era)
@@ -2975,11 +2975,6 @@ impl ImportSealedBlock for Client {
                 false,
             ));
         });
-        self.db
-            .read()
-            .key_value()
-            .flush()
-            .expect("DB flush failed.");
         Ok(hash)
     }
 }

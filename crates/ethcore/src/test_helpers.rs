@@ -368,9 +368,7 @@ pub fn new_db() -> Arc<dyn BlockChainDB> {
         trace_blooms: blooms_db::Database::open(trace_blooms_dir.path()).unwrap(),
         _blooms_dir: blooms_dir,
         _trace_blooms_dir: trace_blooms_dir,
-        key_value: Arc::new(ethcore_db::InMemoryWithMetrics::create(
-            ::db::NUM_COLUMNS.unwrap(),
-        )),
+        key_value: Arc::new(ethcore_db::InMemoryWithMetrics::create(::db::NUM_COLUMNS)),
     };
 
     Arc::new(db)
