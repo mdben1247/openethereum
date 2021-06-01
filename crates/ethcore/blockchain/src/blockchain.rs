@@ -1979,7 +1979,7 @@ mod tests {
             _blooms_dir: blooms_dir,
             _trace_blooms_dir: trace_blooms_dir,
             key_value: Arc::new(ethcore_db::InMemoryWithMetrics::create(
-                ethcore_db::NUM_COLUMNS
+                ethcore_db::NUM_COLUMNS,
             )),
         };
 

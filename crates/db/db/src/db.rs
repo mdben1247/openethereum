@@ -388,10 +388,7 @@ impl kvdb::KeyValueDB for DatabaseWithMetrics {
         self.db.write(transaction)
     }
 
-    fn iter<'a>(
-        &'a self,
-        col: u32,
-    ) -> Box<(dyn Iterator<Item = (Box<[u8]>, Box<[u8]>)> + 'a)> {
+    fn iter<'a>(&'a self, col: u32) -> Box<(dyn Iterator<Item = (Box<[u8]>, Box<[u8]>)> + 'a)> {
         kvdb::KeyValueDB::iter(&self.db, col)
     }
 
@@ -453,10 +450,7 @@ impl kvdb::KeyValueDB for InMemoryWithMetrics {
         self.db.write(transaction)
     }
 
-    fn iter<'a>(
-        &'a self,
-        col: u32,
-    ) -> Box<(dyn Iterator<Item = (Box<[u8]>, Box<[u8]>)> + 'a)> {
+    fn iter<'a>(&'a self, col: u32) -> Box<(dyn Iterator<Item = (Box<[u8]>, Box<[u8]>)> + 'a)> {
         kvdb::KeyValueDB::iter(&self.db, col)
     }
 
